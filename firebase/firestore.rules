@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
+    function validReport() {
+      let d = request.resource.data;
+      return d.deviceUid == request.auth.uid
+        && d.vehiclePlateKey is string
+        && d.vehiclePlateKey.size() > 0 && d.vehiclePlateKey.size() <= 10
+        && d.vehiclePlate is string
+        && d.hasDefect is bool
+        && d.defectCount is int
+        && d.defectKeys is list
+        && d.items is map
+        && d.completedAt is timestamp
+        && d.pdfPath is string
+        && d.pdfPath.matches('reports/' + request.auth.uid + '/.*');
+    }
+
+    match /reports/{reportId} {
+      // Policial (auth anônima): só envia. Nunca lê.
+      allow create: if request.auth != null && validReport();
+
+      // Reenvio idêntico do mesmo checklist (retry de rede) é aceito; qualquer alteração não.
+      allow update: if request.auth != null
+        && resource.data.deviceUid == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().size() == 0;
+
+      // Administradores: leem tudo e podem corrigir/apagar.
+      allow read: if isAdmin();
+      allow update, delete: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

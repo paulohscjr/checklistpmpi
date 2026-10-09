@@ -1,0 +1,7 @@
+{
+  "name": "Checklist PMPI",
+  "description": "Aplicativo institucional de Checklist de Viaturas para a Polícia Militar do Estado do Piauí (PMPI)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
